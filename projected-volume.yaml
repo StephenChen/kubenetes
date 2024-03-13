@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: project-volume
+  labels:
+    zone: us-est-coast
+    cluster: test-cluster1
+    rack: rack-22
+spec:
+  containers:
+    - name: project-volume-secret
+      image: busybox
+      args:
+        - sleep
+        - "86400"
+      volumeMounts:
+        - mountPath: "/projected-volume-secret"
+          name: secret-volume
+          readOnly: true
+    - name: project-volume-configmap
+      image: busybox
+      args:
+        - sleep
+        - "86400"
+      volumeMounts:
+        - mountPath: "/projected-volume-configmap"
+          name: configmap-volume
+          readOnly: true
+    - name: project-volume-downwardapi
+      image: busybox
+      command: [ "sh", "-c" ]
+      args:
+        - while true; do
+          if [[ -e /projected-volume-downwardapi/labels]];then
+          echo -en '\n\n'; cat /projected-volume-downwardapi/labels; fi;
+          sleep 5;
+          done;
+      volumeMounts:
+        - mountPath: "/projected-volume-downwardapi"
+          name: downwardapi-volume
+          readOnly: false
+  volumes:
+    - name: secret-volume
+      projected:
+        sources:
+          - secret:
+              name: mysecret
+    - name: configmap-volume
+      projected:
+        sources:
+          - configMap:
+              name: myconfigmap
+    - name: downwardapi-volume
+      projected:
+        sources:
+          - downwardAPI:
+              items:
+                - path: "labels"
+                  fieldRef:
+                    fieldPath: metadata.labels
