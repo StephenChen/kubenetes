@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: web
+spec:
+  serviceName: "nginx"
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.8
+          ports:
+            - containerPort: 80
+              name: web
+          volumeMounts:
+            - mountPath: /usr/share/nginx/html
+              name: www
+  # web-0, web-1
+  volumeClaimTemplates:
+    - metadata:
+        name: www
+      spec:
+        #        storageClassName: local-storage
+        storageClassName: manual
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+  # <PVC name>-<StatefulSet name>-<No.>
+  # www-web-0, www-web-1
